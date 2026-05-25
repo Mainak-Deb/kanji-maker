@@ -98,7 +98,7 @@ const KanjiExplorer = ({ onSelectKanji }) => {
   useEffect(() => {
     const fetchKanji = async () => {
       try {
-        const response = await fetch('https://raw.githubusercontent.com/davidluzgouveia/kanji-data/master/kanji.json');
+        const response = await fetch('/kanji-maker/kanji.json');
         const json = await response.json();
         
         const grouped = { 5: [], 4: [], 3: [], 2: [], 1: [] };
