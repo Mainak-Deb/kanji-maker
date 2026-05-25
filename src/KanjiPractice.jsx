@@ -158,11 +158,11 @@ export default function KanjiPractice() {
         {/* Branding */}
         <div className="flex items-center gap-4">
           <div className="w-11 h-11 border-2 border-[#B33B2E] text-[#B33B2E] flex items-center justify-center text-2xl jp-serif font-medium bg-[#F4F1EB]">
-            漢
+            泉
           </div>
           <div>
-            <h1 className="text-xl tracking-[0.2em] font-serif font-bold text-[#1A1A1A] leading-tight">KANJI</h1>
-            <p className="text-[10px] tracking-widest text-[#B33B2E] jp-serif font-medium mt-0.5">日本語能力試験</p>
+            <h1 className="text-xl tracking-[0.2em] font-serif font-bold text-[#1A1A1A] leading-tight">iZUMICHAN KANJI</h1>
+            <p className="text-[10px] tracking-widest text-[#B33B2E] jp-serif font-medium mt-0.5">泉ちゃん漢字</p>
           </div>
         </div>
 

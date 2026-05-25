@@ -219,11 +219,11 @@ const KanjiExplorer = ({ onSelectKanji }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div className="flex items-center space-x-4 hidden sm:flex">
             <div className="w-12 h-12 bg-transparent border-2 border-hanko rounded-sm flex items-center justify-center text-hanko rotate-3">
-              <span className="text-3xl font-jp font-bold">漢</span>
+              <span className="text-3xl font-jp font-bold">泉</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-widest text-sumi">KANJI</h1>
-              <p className="text-xs text-hanko font-bold tracking-[0.2em] uppercase">日本語能力試験</p>
+              <h1 className="text-2xl font-bold tracking-widest text-sumi">iZUMICHAN KANJI</h1>
+              <p className="text-xs text-hanko font-bold tracking-[0.2em] uppercase">泉ちゃん漢字</p>
             </div>
           </div>
 
