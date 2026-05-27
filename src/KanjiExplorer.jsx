@@ -1,6 +1,33 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Volume2, X, ChevronDown, BookOpen, Volume1, PenTool, RotateCcw, Info, Search, ChevronRight, Hash, TrendingUp, Sparkles } from 'lucide-react';
 
+// Kanji Categorization Engine based on Textbook Curriculum (N5/N4)
+const KANJI_CATEGORIES = {
+  'Numbers & Counters': '一二三四五六七八九十百千万円第数点半分回毎',
+  'Time & Calendar': '時寺間今何年春夏秋冬朝昼晩夜午週末期初次曜昔去昨節平',
+  'People & Family': '人力男女父母子好方族様主未姉妹兄弟両親結婚夫婦係関育',
+  'Body & Health': '口目耳手心足走起止正歩休体指背自鼻寝頭顔身形成笑泣困医者薬治病院痛活',
+  'Nature & Weather': '日月火水木金土山田川石早草花林森世界地図海池鳥野雨雪電風元天気熱暑氷寒冷温晴降度',
+  'Location & Directions': '内外上下左右向側階北南西東京国町市区村州都県',
+  'Size & Amount': '小少中大多太高低広短重軽',
+  'House & Living': '家入出門開閉所近住室部屋和洋',
+  'School & Education': '生先私友学校本字文対書化公立知科教枚英音勉強漢紙絵宿題経験受授業実卒式服制組台問答留辞単法究研比皆専読',
+  'Travel & Transport': '旅車首道駅玉乗転空港飛橋線通荷券泊神社祭際術館庭園局急定',
+  'Verbs & Actions': '聞見思言語話会米来番行待持帰白良食物始終働歌着登使忘付失切洗残置調遊決現引写考集進落続払',
+  'Adjectives & Attributes': '新古美若長安楽明有前名後速遅暗悪忙静変',
+  'Animals': '犬鳥馬羊牛魚虫',
+  'Food & Drink': '肉反飯飲味料理由',
+  'Colors': '色赤青黒茶黄横銀',
+  'Work, Sports & Society': '運動試合打選泳習練事仕作品個商店員用買売送贈酒配貸願取相礼最以不非無全然歳達画映伝的連絡信説面接発表'
+};
+
+const KANJI_TO_CATEGORY = {};
+Object.entries(KANJI_CATEGORIES).forEach(([category, chars]) => {
+  for (let char of chars) {
+    KANJI_TO_CATEGORY[char] = category;
+  }
+});
+
 // Compact engine to convert Hiragana/Katakana to Romaji
 const kanaToRomajiMap = {
   'あ':'a', 'い':'i', 'う':'u', 'え':'e', 'お':'o',
@@ -145,6 +172,37 @@ const KanjiExplorer = ({ onSelectKanji }) => {
     return kanjiData[selectedLevel] || [];
   }, [kanjiData, selectedLevel, searchQuery, allKanji]);
 
+  // Handle categorized grouping for JLPT N5 and N4
+  const groupedViewData = useMemo(() => {
+    if (searchQuery || (selectedLevel !== 4 && selectedLevel !== 5) || !kanjiData) return null;
+
+    const groups = {};
+    const others = [];
+
+    (kanjiData[selectedLevel] || []).forEach(item => {
+      const cat = KANJI_TO_CATEGORY[item.kanji];
+      if (cat) {
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(item);
+      } else {
+        others.push(item);
+      }
+    });
+
+    const orderedGroups = [];
+    Object.keys(KANJI_CATEGORIES).forEach(key => {
+      if (groups[key] && groups[key].length > 0) {
+        orderedGroups.push({ category: key, items: groups[key] });
+      }
+    });
+
+    if (others.length > 0) {
+      orderedGroups.push({ category: 'Other Categories', items: others });
+    }
+
+    return orderedGroups;
+  }, [kanjiData, selectedLevel, searchQuery]);
+
   useEffect(() => {
     setDisplayedCount(CHUNK_SIZE);
   }, [selectedLevel, searchQuery]);
@@ -152,7 +210,7 @@ const KanjiExplorer = ({ onSelectKanji }) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && !groupedViewData) {
           setDisplayedCount((prev) => Math.min(prev + CHUNK_SIZE, currentList.length));
         }
       },
@@ -162,7 +220,7 @@ const KanjiExplorer = ({ onSelectKanji }) => {
     return () => {
       if (observerTarget.current) observer.unobserve(observerTarget.current);
     };
-  }, [observerTarget, currentList.length]);
+  }, [observerTarget, currentList.length, groupedViewData]);
 
   const handleLevelChange = (level) => {
     setSelectedLevel(level);
@@ -222,8 +280,8 @@ const KanjiExplorer = ({ onSelectKanji }) => {
               <span className="text-3xl font-jp font-bold">泉</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-widest text-sumi">iZUMICHAN KANJI</h1>
-              <p className="text-xs text-hanko font-bold tracking-[0.2em] uppercase">泉ちゃん漢字</p>
+              <h1 className="text-2xl font-bold tracking-widest text-sumi">Washi Kanji</h1>
+              <p className="text-xs text-hanko font-bold tracking-[0.2em] uppercase">和紙漢字</p>
             </div>
           </div>
 
@@ -292,31 +350,56 @@ const KanjiExplorer = ({ onSelectKanji }) => {
           <div className="flex items-center gap-3">
              <div className="h-[1px] w-12 bg-sumi/20 hidden sm:block"></div>
              <span className="text-sm font-medium opacity-60 tracking-widest uppercase">
-               Showing {Math.min(displayedCount, currentList.length)} / {currentList.length}
+               Showing {groupedViewData ? currentList.length : Math.min(displayedCount, currentList.length)} / {currentList.length}
              </span>
           </div>
         </div>
 
-        {/* Kanji Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-          {currentList.slice(0, displayedCount).map((item, index) => (
-            <KanjiCard
-              key={`${item.kanji}-${index}`}
-              item={item}
-              onClick={() => onSelectKanji(item)} // Notify root app state directly
-            />
-          ))}
-        </div>
-
-        {/* Loading Sentinel */}
-        {displayedCount < currentList.length && (
-          <div ref={observerTarget} className="h-32 flex items-center justify-center mt-8">
-             <div className="flex space-x-2">
-                <div className="w-3 h-3 bg-hanko rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-3 h-3 bg-hanko rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-3 h-3 bg-hanko rounded-full animate-bounce"></div>
+        {/* Dynamic Render Mode: Grouped by Category (N5/N4) or Flat Grid */}
+        {groupedViewData ? (
+          <div className="flex flex-col gap-14">
+            {groupedViewData.map((group) => (
+              <div key={group.category} className="flex flex-col gap-6">
+                <h3 className="text-xl font-bold text-sumi tracking-widest border-b-2 border-hanko/20 pb-2 flex items-center gap-3">
+                  <span className="bg-hanko text-white text-[11px] px-2.5 py-1 rounded-sm shadow-sm font-mono-custom">
+                    {group.items.length}
+                  </span>
+                  {group.category}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                  {group.items.map((item, index) => (
+                    <KanjiCard
+                      key={`${item.kanji}-${index}`}
+                      item={item}
+                      onClick={() => onSelectKanji(item)}
+                    />
+                  ))}
+                </div>
               </div>
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+              {currentList.slice(0, displayedCount).map((item, index) => (
+                <KanjiCard
+                  key={`${item.kanji}-${index}`}
+                  item={item}
+                  onClick={() => onSelectKanji(item)}
+                />
+              ))}
+            </div>
+
+            {displayedCount < currentList.length && (
+              <div ref={observerTarget} className="h-32 flex items-center justify-center mt-8">
+                <div className="flex space-x-2">
+                    <div className="w-3 h-3 bg-hanko rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-3 h-3 bg-hanko rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-3 h-3 bg-hanko rounded-full animate-bounce"></div>
+                  </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
@@ -508,7 +591,6 @@ const PracticePad = ({ kanjiChar, maxStrokes }) => {
   );
 };
 
-// Exported separately so it can mount safely to the App root layer
 export const KanjiModal = ({ kanji, onClose, onPlayAudio }) => {
   const [exampleWords, setExampleWords] = useState([]);
   const [loadingWords, setLoadingWords] = useState(true);
@@ -517,7 +599,6 @@ export const KanjiModal = ({ kanji, onClose, onPlayAudio }) => {
     const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     
-    // Prevent underlying main layout content body from shifting/scrolling
     document.body.style.overflow = 'hidden';
     
     return () => {
